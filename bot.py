@@ -14,9 +14,9 @@ with open('wiki_genintro.csv', 'r') as file:
     reader = csv.DictReader(file)
     data = list(reader)
 
-@bot.message_handler(func=lambda msg: True)
-def handle_message(message):
-    bot.reply_to(message, "Please use /start or /hello command to begin the interaction.")
+# @bot.message_handler(func=lambda msg: True)
+# def handle_message(message):
+#     bot.reply_to(message, "Please use /start or /hello command to begin the interaction.")
 
 # getting the input for random question?
 @bot.message_handler(commands=['start'])
