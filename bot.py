@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sb
 import matplotlib.pyplot as plt # we only need pyplot
-sb.set() # set the default Seaborn style for graphics
 
 import telebot
 load_dotenv()
@@ -21,3 +20,4 @@ def send_welcome(message):
     bot.reply_to(message, "Howdy, how are you doing?")
 
 bot.infinity_polling()
+
