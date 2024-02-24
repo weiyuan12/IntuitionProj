@@ -12,17 +12,10 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Function to create inline keyboard with two buttons
-def generate_markup():
+def generate_markup(type):
     markup = telebot.types.InlineKeyboardMarkup()
-    button1 = telebot.types.InlineKeyboardButton("1st", callback_data="first")
-    button2 = telebot.types.InlineKeyboardButton("2nd", callback_data="second")
-    markup.add(button1, button2)
-    return markup
-
-def generate_markup():
-    markup = telebot.types.InlineKeyboardMarkup()
-    button1 = telebot.types.InlineKeyboardButton("AI", callback_data="Correct")
-    button2 = telebot.types.InlineKeyboardButton("Human", callback_data="Wrong")
+    button1 = telebot.types.InlineKeyboardButton(("1st" if type == "image" else "AI"), callback_data=("first" if type == "image" else "Correct"))
+    button2 = telebot.types.InlineKeyboardButton(("2nd" if type == "image" else "Human"), callback_data=("second" if type == "image" else "Wrong"))
     markup.add(button1, button2)
     return markup
 
@@ -62,7 +55,7 @@ def send_images_logic(chat_id):
         with open(random_image("./Images Data/AI Generated"), 'rb') as photo:
             bot.send_photo(chat_id, photo)
         
-    bot.send_message(chat_id, "Choose an option:", reply_markup=generate_markup())
+    bot.send_message(chat_id, "Choose an option:", reply_markup=generate_markup("image"))
 
 # Function to run when the user types "/image"
 @bot.message_handler(commands=['image'])
@@ -119,7 +112,7 @@ def continue_or_end_handler(call):
     if call.data == "continueQ":
         chat_id = call.message.chat.id
         choose_random_question_with_options(chat_id)
-    else:
+    elif call.data == "end":
         bot.send_message(call.message.chat.id, f"Game ended! Your final score: {points}/{count}")
             # Optionally, reset points and count for a new game
         points = 0
@@ -139,7 +132,7 @@ def choose_random_question_with_options(chat_id):
     question = random_row['wiki_intro']
     answer = random_row["Correct/ Wrong"]  # Get the custom data
     # Encode the custom data in a hidden HTML input field
-    bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=generate_markup() )
+    bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=generate_markup("question") )
 
 # Callback query handler
 @bot.callback_query_handler(func=lambda call: call.data in ["Correct", "Wrong"] )
