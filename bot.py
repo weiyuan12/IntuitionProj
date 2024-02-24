@@ -9,6 +9,12 @@ load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
+# Start command handler
+@bot.message_handler(commands=['start'])
+def start(message):
+    choose_random_question_with_options(bot, message.chat.id)
+
+
 # Load data from CSV into a list of dictionaries
 with open('wiki_genintro.csv', 'r') as file:
     reader = csv.DictReader(file)
@@ -31,6 +37,7 @@ def choose_random_question_with_options(bot, chat_id):
     # Ask the user the question and provide option buttons
     bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=markup)
 
+
 # Callback query handler
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
@@ -43,6 +50,9 @@ def query_handler(call):
             if item['wiki_intro'] == call.message.text:
                 correct_answer = item['Correct/ Wrong']
                 break
+
+        print("User's choice:", call.data)
+        print("Correct answer:", correct_answer)
 
         # Check if the user's choice matches the correct answer
         if call.data == correct_answer:
@@ -58,11 +68,6 @@ def query_handler(call):
     else:
         bot.answer_callback_query(call.id, text="Invalid option selected")
 
-
-# Start command handler
-@bot.message_handler(commands=['start'])
-def start(message):
-    choose_random_question_with_options(bot, message.chat.id)
 
 # Infinite polling
 def main():
