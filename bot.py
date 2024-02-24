@@ -14,18 +14,8 @@ with open('wiki_genintro.csv', 'r') as file:
     reader = csv.DictReader(file)
     data = list(reader)
 
-# @bot.message_handler(func=lambda msg: True)
-# def handle_message(message):
-#     bot.reply_to(message, "Please use /start or /hello command to begin the interaction.")
-
-# getting the input for random question?
-@bot.message_handler(commands=['start'])
-def choose_random_question_with_options(csv_file, bot, chat_id):
-    # Read data from CSV file
-    with open(csv_file, 'r', newline='', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        data = list(reader)
-
+# Function to choose a random question and send it to the user with options
+def choose_random_question_with_options(bot, chat_id):
     # Choose a random row
     random_row = random.choice(data)
 
@@ -41,20 +31,16 @@ def choose_random_question_with_options(csv_file, bot, chat_id):
     # Ask the user the question and provide option buttons
     bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=markup)
 
-    return markup
-
+# Callback query handler
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
     if call.data in ("Correct", "Wrong"):
         bot.answer_callback_query(call.id)
         
-        # Get the randomly chosen question
-        random_question = get_random_question()
-        
         # Find the correct answer for the randomly chosen question
         correct_answer = None
         for item in data:
-            if item['wiki_intro'] == random_question:
+            if item['wiki_intro'] == call.message.text:
                 correct_answer = item['Correct/ Wrong']
                 break
 
@@ -68,19 +54,19 @@ def query_handler(call):
         bot.send_message(call.message.chat.id, response)
 
         # Get the next question
-        choose_random_question_with_options(csv_file, bot, call.message.chat.id)
+        choose_random_question_with_options(bot, call.message.chat.id)
     else:
         bot.answer_callback_query(call.id, text="Invalid option selected")
 
 
-# @bot.message_handler(commands=['start', 'hello'])
-# def send_welcome(message):
-#     bot.reply_to(message, "Howdy, how are you doing?")
-#     get_question(message.chat.id)
+# Start command handler
+@bot.message_handler(commands=['start'])
+def start(message):
+    choose_random_question_with_options(bot, message.chat.id)
 
-
+# Infinite polling
 def main():
-    bot.polling(60)
+    bot.infinity_polling()
 
 if __name__ == '__main__':
     main()
