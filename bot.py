@@ -22,21 +22,19 @@ def get_question(chat_id):
 
 def generate_markup():
     markup = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("AI Generated", callback_data="True")
-    button2 = types.InlineKeyboardButton("Human Written", callback_data="False")
+    button1 = types.InlineKeyboardButton("AI Generated", callback_data="Correct")
+    button2 = types.InlineKeyboardButton("Human Written", callback_data="Wrong")
     markup.add(button1, button2)
     return markup
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
-    if call.data in ("True", "False"):
+    if call.data in ("Correct", "Wrong"):
         bot.answer_callback_query(call.id)
         # Get the correct answer for the current question
         correct_answer = next(item['Correct/ Wrong'] for item in data if item['wiki_intro'] == call.message.text)
-        # Map user's choice to the values in the "Correct/ Wrong" column
-        user_choice = "Correct" if call.data == "True" else "False"
         # Check if the user's choice matches the correct answer
-        if user_choice == correct_answer:
+        if call.data == correct_answer:
             response = "Congratulations! You are correct! 🎉"
             # bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
         else:
