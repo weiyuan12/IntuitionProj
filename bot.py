@@ -38,7 +38,7 @@ def query_handler(call):
         # Check if the user's choice matches the correct answer
         if user_choice == correct_answer:
             response = "Congratulations! You are correct! 🎉"
-            bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
+            # bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
         else:
             response = "Oops! That's not correct. Better luck next time! 😕"
         bot.send_message(call.message.chat.id, response)
