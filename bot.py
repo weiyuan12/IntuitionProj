@@ -15,6 +15,7 @@ def generate_markup():
     markup.add(button1, button2)
     return markup
 
+# Function to choose a random image and return its path
 def random_image(folder_path):
     # List all files in the folder
     image_files = os.listdir(folder_path)
@@ -27,7 +28,7 @@ def random_image(folder_path):
     else:
         print("No image files found in the folder.")
 
-
+# Function to display 2 images and the 2 buttons
 def send_images_logic(chat_id):
     global image_order
     image_order = random.randint(1,2) 
@@ -45,14 +46,15 @@ def send_images_logic(chat_id):
         
     bot.send_message(chat_id, "Choose an option:", reply_markup=generate_markup())
 
-
+# Function to run when the user types "/image"
 @bot.message_handler(commands=['image'])
 def send_images(message):
     global points 
     points = 0
     send_images_logic(message.chat.id)
 
-# Callback query handler
+# Function listens to the button click and tells user if right or wrong
+# It also keeps track of points and repeats the game 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
     global points
@@ -76,9 +78,7 @@ def query_handler(call):
     chat_id = call.message.chat.id
     send_images_logic(chat_id)
     
-
-
-
+# Unnessary function for testing
 @bot.message_handler(func=lambda msg: True)
 def echo_all(message):
     bot.reply_to(message, message.text)
