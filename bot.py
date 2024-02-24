@@ -50,7 +50,7 @@ def query_handler(call):
         else:
             response = "Oops! That's not correct. Better luck next time! 😕"
         bot.send_message(call.message.chat.id, response)
-        # Get the next question
+        # After sending the response, ask a new question
         get_question(call.message.chat.id)
     else:
         bot.answer_callback_query(call.id, text="Invalid option selected")
@@ -64,5 +64,6 @@ def main():
 
 if __name__ == '__main__':
     main()
+
 
 # bot.infinity_polling()
