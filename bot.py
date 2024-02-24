@@ -23,7 +23,7 @@ def send_welcome(message):
 def get_question(chat_id):
     question_data = random.choice(data)
     question = question_data['wiki_intro']
-    answer = question_data['Correct/Wrong']
+    answer = question_data['Correct/ Wrong']
     markup = generate_markup()
     bot.send_message(chat_id, f"{question}\n\nIs this an AI generated intro, or one written by a human?", reply_markup=markup)
 
