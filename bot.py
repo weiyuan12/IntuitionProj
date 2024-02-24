@@ -10,7 +10,7 @@ BOT_TOKEN = os.getenv('BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
 # Load data from CSV into a list of dictionaries
-with open('data.csv', 'r') as file:
+with open('wiki_genintro.csv', 'r') as file:
     reader = csv.DictReader(file)
     data = list(reader)
 
@@ -22,16 +22,16 @@ def send_welcome(message):
 # Function to get a random question and send it to the user
 def get_question(chat_id):
     question_data = random.choice(data)
-    question = question_data['Input']
-    answer = question_data['Answer']
+    question = question_data['wiki_intro']
+    answer = question_data['Correct/Wrong']
     markup = generate_markup()
-    bot.send_message(chat_id, question, reply_markup=markup)
+    bot.send_message(chat_id, f"{question}\n\nIs this an AI generated intro, or one written by a human?", reply_markup=markup)
 
 # Function to create inline keyboard with two buttons
 def generate_markup():
     markup = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("True", callback_data="True")
-    button2 = types.InlineKeyboardButton("False", callback_data="False")
+    button1 = types.InlineKeyboardButton("AI Generated", callback_data="True")
+    button2 = types.InlineKeyboardButton("Human Written", callback_data="False")
     markup.add(button1, button2)
     return markup
 
@@ -41,7 +41,7 @@ def query_handler(call):
     if call.data == "True" or call.data == "False":
         bot.answer_callback_query(call.id)
         # Get the correct answer for the current question
-        correct_answer = next(item['Answer'] for item in data if item['Input'] == call.message.text)
+        correct_answer = next(item['Correct/Wrong'] for item in data if item['wiki_intro'] == call.message.text)
         # Check if the user's choice matches the correct answer
         if call.data == correct_answer:
             response = "Correct! Well done!"
@@ -62,6 +62,5 @@ def main():
 
 if __name__ == '__main__':
     main()
-
 
 bot.infinity_polling()
