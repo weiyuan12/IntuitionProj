@@ -12,9 +12,15 @@ def generate_markup():
     markup = telebot.types.InlineKeyboardMarkup()
     button1 = telebot.types.InlineKeyboardButton("1st", callback_data="first")
     button2 = telebot.types.InlineKeyboardButton("2nd", callback_data="second")
+    button3 = telebot.types.InlineKeyboardButton("End", callback_data="end")
     markup.add(button1, button2)
     return markup
-
+def generate_markup_end():
+    markup = telebot.types.InlineKeyboardMarkup()
+    button3 = telebot.types.InlineKeyboardButton("End", callback_data="end")
+    button4 = telebot.types.InlineKeyboardButton("Continue", callback_data="continue")
+    markup.add(button3, button4)
+    return markup
 # Function to choose a random image and return its path
 def random_image(folder_path):
     # List all files in the folder
@@ -49,15 +55,17 @@ def send_images_logic(chat_id):
 # Function to run when the user types "/image"
 @bot.message_handler(commands=['image'])
 def send_images(message):
-    global points 
+    global points, count
     points = 0
+    count = 0
     send_images_logic(message.chat.id)
 
 # Function listens to the button click and tells user if right or wrong
 # It also keeps track of points and repeats the game 
-@bot.callback_query_handler(func=lambda call: True)
+@bot.callback_query_handler(func=lambda call:call.data in ["first", "second"])
 def query_handler(call):
-    global points
+    global points, count
+    count +=1
     if image_order == 1:
         if call.data == "first":
             bot.answer_callback_query(call.id)
@@ -74,10 +82,26 @@ def query_handler(call):
             bot.answer_callback_query(call.id)
             bot.send_message(call.message.chat.id, "Choosen: 2nd. Correct! Yayyy!")
             points += 1
-    bot.send_message(call.message.chat.id, f"Current points: {points}")
-    chat_id = call.message.chat.id
-    send_images_logic(chat_id)
     
+    bot.send_message(call.message.chat.id, f"Current points: {points}")
+    bot.send_message(call.message.chat.id, "Continue?",  reply_markup=generate_markup_end())
+    
+
+
+@bot.callback_query_handler(func=lambda call: call.data in ["continue", "end"])
+def continue_or_end_handler(call):
+    print("calling end handler")
+    global points, count
+    if call.data == "continue":
+            chat_id = call.message.chat.id
+            send_images_logic(chat_id)
+    elif call.data == "end":
+            bot.send_message(call.message.chat.id, f"Game ended! Your final score: {points}/{count}")
+            # Optionally, reset points and count for a new game
+            points = 0
+            count = 0
+
+
 # Unnessary function for testing
 @bot.message_handler(func=lambda msg: True)
 def echo_all(message):
