@@ -55,7 +55,7 @@ def handle_message(message):
     bot.reply_to(message, "Please use /start or /hello command to begin the interaction.")
 
 def main():
-    bot.polling()
+    bot.polling(60)
 
 if __name__ == '__main__':
     main()
