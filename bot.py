@@ -41,12 +41,14 @@ def query_handler(call):
     if call.data == "True" or call.data == "False":
         bot.answer_callback_query(call.id)
         # Get the correct answer for the current question
-        correct_answer = next(item['Correct/Wrong'] for item in data if item['wiki_intro'] == call.message.text)
+        correct_answer = next(item['Correct/ Wrong'] for item in data if item['wiki_intro'] == call.message.text)
         # Check if the user's choice matches the correct answer
         if call.data == correct_answer:
-            response = "Correct! Well done!"
+            response = "Congratulations! You are correct! 🎉"
+            # Send a sticker
+            bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
         else:
-            response = "Wrong answer. Try again!"
+            response = "Oops! That's not correct. Better luck next time! 😕"
         bot.send_message(call.message.chat.id, response)
         # Get the next question
         get_question(call.message.chat.id)
