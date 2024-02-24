@@ -6,7 +6,6 @@ from telebot import types
 import csv
 import random
 from dotenv import load_dotenv
-from bs4 import BeautifulSoup
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
