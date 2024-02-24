@@ -4,7 +4,6 @@ import random
 import telebot
 from telebot import types
 import csv
-import random
 from dotenv import load_dotenv
 
 load_dotenv()
