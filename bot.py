@@ -73,25 +73,6 @@ def query_handler(call):
         bot.answer_callback_query(call.id, text="Invalid option selected")
 
 
-# @bot.callback_query_handler(func=lambda call: True)
-# def query_handler(call):
-#     if call.data in ("Correct", "Wrong"):
-#         bot.answer_callback_query(call.id)
-#         # Get the correct answer for the current question
-#         correct_answer = next(item['Correct/ Wrong'] for item in data if item['wiki_intro'] == call.message.text)
-#         # Check if the user's choice matches the correct answer
-#         if call.data == correct_answer:
-#             response = "Congratulations! You are correct! 🎉"
-#             # bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
-#         else:
-#             response = "Oops! That's not correct. Better luck next time! 😕"
-#         bot.send_message(call.message.chat.id, response)
-#         # Get the next question
-#         get_question(call.message.chat.id)
-#     else:
-#         bot.answer_callback_query(call.id, text="Invalid option selected")
-
-
 # @bot.message_handler(commands=['start', 'hello'])
 # def send_welcome(message):
 #     bot.reply_to(message, "Howdy, how are you doing?")
