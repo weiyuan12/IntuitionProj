@@ -18,67 +18,59 @@ with open('wiki_genintro.csv', 'r') as file:
 def handle_message(message):
     bot.reply_to(message, "Please use /start or /hello command to begin the interaction.")
 
+# getting the input for random question?
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    bot.reply_to(message, "Howdy, how are you doing?")
-    get_question(message.chat.id)
+def choose_random_question_with_options(csv_file, bot, chat_id):
+    # Read data from CSV file
+    with open(csv_file, 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        data = list(reader)
 
-# Function to choose a random input 
-def get_question(chat_id):
-    question_data = random.choice(data)
-    question = question_data['wiki_intro']
-    markup = generate_markup()
-    bot.send_message(chat_id, f"{question}\n\nIs this an AI generated intro, or one written by a human?", reply_markup=markup)
+    # Choose a random row
+    random_row = random.choice(data)
 
-# Function to choose a random input 
-def random_input(folder_path):
-    # List all files in the folder
-    input_files = os.listdir(folder_path)
+    # Get the value from the "wiki_intro" column
+    question = random_row['wiki_intro']
 
-    # Randomly select an image
-    if input_files:
-        selected_text = random.choice(input_files)
-        input_path = os.path.join(folder_path, selected_text)
-        return input_path
-    else:
-        print("No text files found in the folder.")
+    # Create inline keyboard markup with two option buttons
+    markup = types.InlineKeyboardMarkup()
+    button1 = types.InlineKeyboardButton("AI Generated", callback_data="Correct")
+    button2 = types.InlineKeyboardButton("Human Written", callback_data="Wrong")
+    markup.add(button1, button2)
 
+    # Ask the user the question and provide option buttons
+    bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=markup)
 
-#######
+    return markup
+
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
-    bot.answer_callback_query(call.id)
-    correct_answer = None
-    for item in data:
-        if item['Question'] == call.message.text:
-            correct_answer = item['Correct_Answer']
-            break
+    if call.data in ("Correct", "Wrong"):
+        bot.answer_callback_query(call.id)
+        
+        # Get the randomly chosen question
+        random_question = get_random_question()
+        
+        # Find the correct answer for the randomly chosen question
+        correct_answer = None
+        for item in data:
+            if item['wiki_intro'] == random_question:
+                correct_answer = item['Correct/ Wrong']
+                break
 
-    if call.data == correct_answer:
-        response = "Correct! Well done!"
+        # Check if the user's choice matches the correct answer
+        if call.data == correct_answer:
+            response = "Congratulations! You are correct! 🎉"
+        else:
+            response = "Oops! That's not correct. Better luck next time! 😕"
+        
+        # Send the response to the user
+        bot.send_message(call.message.chat.id, response)
+
+        # Get the next question
+        choose_random_question_with_options(csv_file, bot, call.message.chat.id)
     else:
-        response = f"Wrong answer. The correct answer is: {correct_answer}"
-    bot.send_message(call.message.chat.id, response)
-
-    # Ask the next question
-    correct_answer = get_question(call.message.chat.id)
-
-@bot.message_handler(commands=['start', 'quiz'])
-def start_quiz(message):
-    bot.reply_to(message, "Welcome to the quiz! Let's get started.")
-    # Ask the first question
-    get_question(message.chat.id)
-
-@bot.message_handler(func=lambda msg: True)
-def handle_message(message):
-    bot.reply_to(message, "Please use /start or /quiz command to begin the quiz.")
-
-def main():
-    bot.polling()
-
-if __name__ == '__main__':
-    main()
-
+        bot.answer_callback_query(call.id, text="Invalid option selected")
 
 
 # @bot.callback_query_handler(func=lambda call: True)
@@ -100,8 +92,14 @@ if __name__ == '__main__':
 #         bot.answer_callback_query(call.id, text="Invalid option selected")
 
 
-# def main():
-#     bot.polling(60)
+# @bot.message_handler(commands=['start', 'hello'])
+# def send_welcome(message):
+#     bot.reply_to(message, "Howdy, how are you doing?")
+#     get_question(message.chat.id)
 
-# if __name__ == '__main__':
-#     main()
+
+def main():
+    bot.polling(60)
+
+if __name__ == '__main__':
+    main()
