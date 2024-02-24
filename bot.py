@@ -6,6 +6,7 @@ from telebot import types
 import csv
 import random
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
 
 load_dotenv()
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -16,15 +17,23 @@ def generate_markup():
     markup = telebot.types.InlineKeyboardMarkup()
     button1 = telebot.types.InlineKeyboardButton("1st", callback_data="first")
     button2 = telebot.types.InlineKeyboardButton("2nd", callback_data="second")
-    button3 = telebot.types.InlineKeyboardButton("End", callback_data="end")
     markup.add(button1, button2)
     return markup
-def generate_markup_end():
+
+def generate_markup():
+    markup = telebot.types.InlineKeyboardMarkup()
+    button1 = telebot.types.InlineKeyboardButton("AI", callback_data="Correct")
+    button2 = telebot.types.InlineKeyboardButton("Human", callback_data="Wrong")
+    markup.add(button1, button2)
+    return markup
+
+def generate_markup_end(type):
     markup = telebot.types.InlineKeyboardMarkup()
     button3 = telebot.types.InlineKeyboardButton("End", callback_data="end")
-    button4 = telebot.types.InlineKeyboardButton("Continue", callback_data="continue")
+    button4 = telebot.types.InlineKeyboardButton("Continue", callback_data=("continue" if type == "image" else "continueQ"))
     markup.add(button3, button4)
     return markup
+
 # Function to choose a random image and return its path
 def random_image(folder_path):
     # List all files in the folder
@@ -64,6 +73,14 @@ def send_images(message):
     count = 0
     send_images_logic(message.chat.id)
 
+
+@bot.message_handler(commands=['question'])
+def start(message):
+    global points, count, answer
+    points = 0
+    count = 0
+    answer = " "
+    choose_random_question_with_options(message.chat.id)
 # Function listens to the button click and tells user if right or wrong
 # It also keeps track of points and repeats the game 
 @bot.callback_query_handler(func=lambda call:call.data in ["first", "second"])
@@ -88,93 +105,69 @@ def query_handler(call):
             points += 1
     
     bot.send_message(call.message.chat.id, f"Current points: {points}")
-    bot.send_message(call.message.chat.id, "Continue?",  reply_markup=generate_markup_end())
+    bot.send_message(call.message.chat.id, "Continue?",  reply_markup=generate_markup_end("image"))
     
 
 
-@bot.callback_query_handler(func=lambda call: call.data in ["continue", "end"])
+@bot.callback_query_handler(func=lambda call: call.data in ["continue", "end", "continueQ"])
 def continue_or_end_handler(call):
+
     print("calling end handler")
     global points, count
     if call.data == "continue":
-            chat_id = call.message.chat.id
-            send_images_logic(chat_id)
-    elif call.data == "end":
-            bot.send_message(call.message.chat.id, f"Game ended! Your final score: {points}/{count}")
+        chat_id = call.message.chat.id
+        send_images_logic(chat_id)
+    if call.data == "continueQ":
+        chat_id = call.message.chat.id
+        choose_random_question_with_options(chat_id)
+    else:
+        bot.send_message(call.message.chat.id, f"Game ended! Your final score: {points}/{count}")
             # Optionally, reset points and count for a new game
-            points = 0
-            count = 0
-
-
-# Unnessary function for testing
-@bot.message_handler(func=lambda msg: True)
-def echo_all(message):
-    bot.reply_to(message, message.text)
-
-bot.infinity_polling()
-# Start command handler
-@bot.message_handler(commands=['start'])
-def start(message):
-    choose_random_question_with_options(bot, message.chat.id)
+        points = 0
+        count = 0
 
 
 # Load data from CSV into a list of dictionaries
-with open('wiki_genintro.csv', 'r') as file:
+with open('wiki_genintro.csv', 'r', errors='ignore') as file:
     reader = csv.DictReader(file)
-    data = list(reader)
+    question_data = list(reader)
 
 # Function to choose a random question and send it to the user with options
-def choose_random_question_with_options(bot, chat_id):
-    # Choose a random row
-    random_row = random.choice(data)
-
+def choose_random_question_with_options(chat_id):
     # Get the value from the "wiki_intro" column
+    global answer
+    random_row = random.choice(question_data)
     question = random_row['wiki_intro']
-
-    # Create inline keyboard markup with two option buttons
-    markup = types.InlineKeyboardMarkup()
-    button1 = types.InlineKeyboardButton("AI Generated", callback_data="Correct")
-    button2 = types.InlineKeyboardButton("Human Written", callback_data="Wrong")
-    markup.add(button1, button2)
-
-    # Ask the user the question and provide option buttons
-    bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=markup)
-
+    answer = random_row["Correct/ Wrong"]  # Get the custom data
+    # Encode the custom data in a hidden HTML input field
+    bot.send_message(chat_id, f"{question}\n\nIs this AI generated or human written?", reply_markup=generate_markup() )
 
 # Callback query handler
-@bot.callback_query_handler(func=lambda call: True)
+@bot.callback_query_handler(func=lambda call: call.data in ["Correct", "Wrong"] )
 def query_handler(call):
-    if call.data in ("Correct", "Wrong"):
-        bot.answer_callback_query(call.id)
-        
-        # Find the correct answer for the randomly chosen question
-        correct_answer = None
-        for item in data:
-            if item['wiki_intro'] == call.message.text:
-                correct_answer = item['Correct/ Wrong']
-                break
+    print("calling query handler")
+    global points, count, answer
+    count +=1
+    print(call.message.entities)
+    
 
-        print("User's choice:", call.data)
-        print("Correct answer:", correct_answer)
+    bot.answer_callback_query(call.id)
+    print("User's choice:", call.data)
+    print("Correct answer:", answer)
 
         # Check if the user's choice matches the correct answer
-        if call.data == correct_answer:
-            response = "Congratulations! You are correct! 🎉"
-        else:
-            response = "Oops! That's not correct. Better luck next time! 😕"
+    if call.data == answer:
+        response = "Congratulations! You are correct! 🎉"
+        points +=1
+    else:
+        response = "Oops! That's not correct. Better luck next time! 😕"
         
         # Send the response to the user
-        bot.send_message(call.message.chat.id, response)
-
+    bot.send_message(call.message.chat.id, response)
         # Get the next question
-        choose_random_question_with_options(bot, call.message.chat.id)
-    else:
-        bot.answer_callback_query(call.id, text="Invalid option selected")
+    bot.send_message(call.message.chat.id, f"Current points: {points}")
+    bot.send_message(call.message.chat.id, "Continue?",  reply_markup=generate_markup_end("question"))
 
 
 # Infinite polling
-def main():
-    bot.infinity_polling()
-
-if __name__ == '__main__':
-    main()
+bot.infinity_polling()
