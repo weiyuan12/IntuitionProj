@@ -17,7 +17,6 @@ with open('wiki_genintro.csv', 'r') as file:
 def get_question(chat_id):
     question_data = random.choice(data)
     question = question_data['wiki_intro']
-    answer = question_data['Correct/ Wrong']
     markup = generate_markup()
     bot.send_message(chat_id, f"{question}\n\nIs this an AI generated intro, or one written by a human?", reply_markup=markup)
 
@@ -30,15 +29,16 @@ def generate_markup():
 
 @bot.callback_query_handler(func=lambda call: True)
 def query_handler(call):
-    if call.data == "True" or call.data == "False":
+    if call.data in ("True", "False"):
         bot.answer_callback_query(call.id)
         # Get the correct answer for the current question
         correct_answer = next(item['Correct/ Wrong'] for item in data if item['wiki_intro'] == call.message.text)
-        bot.send_message(call.message.chat.id, f"Correct answer: {correct_answer}")
+        # Map user's choice to the values in the "Correct/ Wrong" column
+        user_choice = "Correct" if call.data == "True" else "False"
         # Check if the user's choice matches the correct answer
-        if call.data == correct_answer:
+        if user_choice == correct_answer:
             response = "Congratulations! You are correct! 🎉"
-            # bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
+            bot.send_sticker(call.message.chat.id, "STICKER_ID_OF_CELEBRATION_STICKER")
         else:
             response = "Oops! That's not correct. Better luck next time! 😕"
         bot.send_message(call.message.chat.id, response)
